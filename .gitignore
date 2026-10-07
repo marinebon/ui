@@ -1,0 +1,6 @@
+node_modules/
+demo-dist/
+.svelte-kit/
+test-results/
+.DS_Store
+*.log

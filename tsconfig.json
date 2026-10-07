@@ -1,0 +1,20 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "types": ["svelte", "vite/client", "node"],
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "paths": { "@marinebon/ui": ["./src/lib/index.ts"] }
+  },
+  "include": ["src/**/*.ts", "src/**/*.svelte", "demo/**/*.ts", "demo/**/*.svelte", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dist", "demo-dist"]
+}
