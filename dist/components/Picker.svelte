@@ -4,131 +4,94 @@
   enclosing Chip). "A–Z / by group" switches between a flat sorted list and groups.
   `value` (selected id) and `mode` are bindable.
 -->
-<script lang="ts">
-  import type { Snippet } from "svelte";
-  import type { PickerItem } from "../types.js";
-  import { clamp, nextId, pickerMatches } from "../utils.js";
-
-  interface Props {
-    items: PickerItem[];
-    value?: string | null;
-    mode?: "az" | "group";
-    /** accessible name; also shown as a mono label when `showLabel` */
-    label?: string;
-    showLabel?: boolean;
-    placeholder?: string;
-    /** show the A–Z / by group switch (default: when any item has a group) */
-    modeToggle?: boolean;
-    /** max list height (css length) */
-    maxHeight?: string;
-    emptyText?: string;
-    /** custom row content */
-    row?: Snippet<[PickerItem]>;
-    onselect?: (item: PickerItem) => void;
-  }
-  let {
-    items,
-    value = $bindable(null),
-    mode = $bindable(undefined),
-    label = "options",
-    showLabel = false,
-    placeholder = "Search…",
-    modeToggle,
-    maxHeight = "18rem",
-    emptyText = "No matches",
-    row,
-    onselect,
-  }: Props = $props();
-
-  const id = nextId("picker");
-  const hasGroups = $derived(items.some((it) => it.group));
-  const effMode = $derived(mode ?? (hasGroups ? "group" : "az"));
-  const showToggle = $derived(modeToggle ?? hasGroups);
-
-  let query = $state("");
-  let active = $state(0);
-  let listEl: HTMLDivElement | undefined = $state();
-
-  const filtered = $derived(items.filter((it) => pickerMatches(it, query)));
-
-  const sections = $derived.by(() => {
-    if (effMode === "az" || !hasGroups) {
-      return [{ group: "", items: [...filtered].sort((a, b) => a.label.localeCompare(b.label)) }];
-    }
-    const order: string[] = [];
-    const by = new Map<string, PickerItem[]>();
-    for (const it of filtered) {
-      const g = it.group ?? "Other";
-      if (!by.has(g)) {
-        by.set(g, []);
-        order.push(g);
-      }
-      by.get(g)!.push(it);
-    }
-    return order.map((g) => ({ group: g, items: by.get(g)! }));
-  });
-
-  const flat = $derived(sections.flatMap((s) => s.items));
-  const optId = (it: PickerItem) => `${id}-o-${it.id.replace(/[^\w-]/g, "_")}`;
-
-  // reset the active row when the list changes
-  $effect(() => {
-    void query;
-    void effMode;
-    const i = flat.findIndex((it) => it.id === value);
-    active = query ? 0 : Math.max(0, i);
-  });
-
-  $effect(() => {
-    const it = flat[active];
-    if (!it || !listEl) return;
-    // scroll only the list (scrollIntoView would also scroll the page)
-    const el = listEl.querySelector<HTMLElement>(`[id="${optId(it)}"]`);
-    if (!el) return;
-    const top = el.offsetTop - listEl.offsetTop;
-    if (top < listEl.scrollTop) listEl.scrollTop = top;
-    else if (top + el.offsetHeight > listEl.scrollTop + listEl.clientHeight)
-      listEl.scrollTop = top + el.offsetHeight - listEl.clientHeight;
-  });
-
-  function pick(it: PickerItem | undefined) {
-    if (!it || it.disabled) return;
-    value = it.id;
-    onselect?.(it);
-  }
-
-  function onkeydown(e: KeyboardEvent) {
-    const n = flat.length;
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        active = clamp(active + 1, 0, n - 1);
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        active = clamp(active - 1, 0, n - 1);
-        break;
-      case "PageDown":
-        e.preventDefault();
-        active = clamp(active + 8, 0, n - 1);
-        break;
-      case "PageUp":
-        e.preventDefault();
-        active = clamp(active - 8, 0, n - 1);
-        break;
-      case "Enter":
-        e.preventDefault();
-        pick(flat[active]);
-        break;
-      case "Escape":
-        if (query) {
-          e.preventDefault(); // handled here; an enclosing Chip ignores prevented Escapes
-          e.stopPropagation();
-          query = "";
-        }
-        break;
-    }
-  }
+<script lang="ts">import { clamp, nextId, pickerMatches } from "../utils.js";
+let { items, value = $bindable(null), mode = $bindable(undefined), label = "options", showLabel = false, placeholder = "Search…", modeToggle, maxHeight = "18rem", emptyText = "No matches", row, onselect } = $props();
+const id = nextId("picker");
+const hasGroups = $derived(items.some((it) => it.group));
+const effMode = $derived(mode ?? (hasGroups ? "group" : "az"));
+const showToggle = $derived(modeToggle ?? hasGroups);
+let query = $state("");
+let active = $state(0);
+let listEl = $state();
+const filtered = $derived(items.filter((it) => pickerMatches(it, query)));
+const sections = $derived.by(() => {
+	if (effMode === "az" || !hasGroups) {
+		return [{
+			group: "",
+			items: [...filtered].sort((a, b) => a.label.localeCompare(b.label))
+		}];
+	}
+	const order = [];
+	const by = new Map();
+	for (const it of filtered) {
+		const g = it.group ?? "Other";
+		if (!by.has(g)) {
+			by.set(g, []);
+			order.push(g);
+		}
+		by.get(g).push(it);
+	}
+	return order.map((g) => ({
+		group: g,
+		items: by.get(g)
+	}));
+});
+const flat = $derived(sections.flatMap((s) => s.items));
+const optId = (it) => `${id}-o-${it.id.replace(/[^\w-]/g, "_")}`;
+// reset the active row when the list changes
+$effect(() => {
+	void query;
+	void effMode;
+	const i = flat.findIndex((it) => it.id === value);
+	active = query ? 0 : Math.max(0, i);
+});
+$effect(() => {
+	const it = flat[active];
+	if (!it || !listEl) return;
+	// scroll only the list (scrollIntoView would also scroll the page)
+	const el = listEl.querySelector(`[id="${optId(it)}"]`);
+	if (!el) return;
+	const top = el.offsetTop - listEl.offsetTop;
+	if (top < listEl.scrollTop) listEl.scrollTop = top;
+	else if (top + el.offsetHeight > listEl.scrollTop + listEl.clientHeight) listEl.scrollTop = top + el.offsetHeight - listEl.clientHeight;
+});
+function pick(it) {
+	if (!it || it.disabled) return;
+	value = it.id;
+	onselect?.(it);
+}
+function onkeydown(e) {
+	const n = flat.length;
+	switch (e.key) {
+		case "ArrowDown":
+			e.preventDefault();
+			active = clamp(active + 1, 0, n - 1);
+			break;
+		case "ArrowUp":
+			e.preventDefault();
+			active = clamp(active - 1, 0, n - 1);
+			break;
+		case "PageDown":
+			e.preventDefault();
+			active = clamp(active + 8, 0, n - 1);
+			break;
+		case "PageUp":
+			e.preventDefault();
+			active = clamp(active - 8, 0, n - 1);
+			break;
+		case "Enter":
+			e.preventDefault();
+			pick(flat[active]);
+			break;
+		case "Escape":
+			if (query) {
+				e.preventDefault();
+				e.stopPropagation();
+				query = "";
+			}
+			break;
+	}
+}
 </script>
 
 <div class="mbon-picker">

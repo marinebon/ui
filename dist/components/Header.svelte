@@ -3,44 +3,11 @@
   current lens/mode word, and on the right a Help ▾ menu (`help` slot), a `feedback` slot and the
   theme toggle.
 -->
-<script lang="ts">
-  import type { Snippet } from "svelte";
-  import logo from "../img/mbon-logo.png";
-  import logoWhite from "../img/mbon-logo-white.png";
-  import Menu from "./Menu.svelte";
-  import ThemeToggle from "./ThemeToggle.svelte";
-
-  interface Props {
-    appName: string;
-    tagline?: string;
-    /** link for the app name (default: none) */
-    appHref?: string;
-    logoHref?: string;
-    /** navy: the dark brand surface with the white wordmark */
-    tone?: "light" | "navy";
-    /** lens / mode word next to the app name */
-    lens?: Snippet;
-    /** Help ▾ menu content (gets close()) */
-    help?: Snippet<[() => void]>;
-    helpLabel?: string;
-    feedback?: Snippet;
-    /** anything else on the right, before Help */
-    right?: Snippet;
-    themeToggle?: boolean;
-  }
-  let {
-    appName,
-    tagline,
-    appHref,
-    logoHref = "https://marinebon.org",
-    tone = "light",
-    lens,
-    help,
-    helpLabel = "Help",
-    feedback,
-    right,
-    themeToggle = true,
-  }: Props = $props();
+<script lang="ts">import logo from "../img/mbon-logo.png";
+import logoWhite from "../img/mbon-logo-white.png";
+import Menu from "./Menu.svelte";
+import ThemeToggle from "./ThemeToggle.svelte";
+let { appName, tagline, appHref, logoHref = "https://marinebon.org", tone = "light", lens, help, helpLabel = "Help", feedback, right, themeToggle = true } = $props();
 </script>
 
 <header class="mbon-header {tone}" data-theme={tone === "navy" ? "dark" : undefined}>

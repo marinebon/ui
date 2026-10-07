@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 
@@ -6,7 +7,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 export default defineConfig({
   root: "demo",
   base: "/ui/",
-  plugins: [svelte()],
+  plugins: [svelte({ configFile: resolve(import.meta.dirname, "svelte.config.js") })],
   resolve: {
     alias: { "@marinebon/ui": fileURLToPath(new URL("./src/lib", import.meta.url)) },
   },

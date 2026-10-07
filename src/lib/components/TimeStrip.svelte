@@ -6,9 +6,10 @@
   is given. `brush` ([f0, f1] fractions), `collapsed` and `height` are bindable.
 -->
 <script lang="ts">
-  import type { Snippet } from "svelte";
+  import { onMount, untrack, type Snippet } from "svelte";
   import type { BrushRange } from "../types.js";
-  import { clamp } from "../utils.js";
+  import { clamp, nextId } from "../utils.js";
+  import { sheetQuery, SHEET_BAR_H, stackFor } from "../paneStack.svelte.js";
 
   interface Props {
     title?: string;
@@ -24,6 +25,8 @@
     brush?: [number, number] | null;
     /** overlay over the container bottom (default) or in normal flow */
     overlay?: boolean;
+    /** viewport width (px) below which the strip joins the Panes' bottom-sheet stack */
+    sheetBelow?: number;
     children?: Snippet<[{ width: number; height: number }]>;
     actions?: Snippet;
     onbrush?: (r: BrushRange) => void;
@@ -41,12 +44,51 @@
     plotRight = 0,
     brush = $bindable(null),
     overlay = true,
+    sheetBelow = 640,
     children,
     actions,
     onbrush,
     onbrushend,
     onclear,
   }: Props = $props();
+
+  // phone: join the container's bottom-sheet stack with the Panes
+  const uid = nextId("timestrip");
+  let probe: HTMLSpanElement | undefined = $state();
+  let container: HTMLElement | null = $state(null);
+  let sheet = $state(false);
+  let claim = false;
+  onMount(() => {
+    container = probe?.parentElement ?? null;
+    const mq = sheetQuery(sheetBelow);
+    const on = () => (sheet = !!mq?.matches && overlay);
+    on();
+    mq?.addEventListener?.("change", on);
+    return () => mq?.removeEventListener?.("change", on);
+  });
+  const stack = $derived(container && overlay ? stackFor(container) : null);
+  $effect(() => {
+    if (!stack) return;
+    return stack.add({ uid, title, collapsed: () => collapsed, collapse: () => (collapsed = true) });
+  });
+  $effect(() => {
+    if (!(sheet && !collapsed && stack)) return;
+    untrack(() => {
+      if (claim) stack.only(uid);
+      else if (stack.firstOpen() !== uid) collapsed = true;
+      claim = false;
+    });
+  });
+  const sheetStyle = $derived.by(() => {
+    if (!sheet || !stack) return undefined;
+    const { barIndex, bars } = stack.layout(uid);
+    const bottom = collapsed ? (bars - 1 - barIndex) * SHEET_BAR_H : bars * SHEET_BAR_H;
+    return `left:0;right:0;bottom:${bottom}px;`;
+  });
+  function toggle() {
+    if (collapsed) claim = true;
+    collapsed = !collapsed;
+  }
 
   let pw = $state(0);
   let ph = $state(0);
@@ -132,7 +174,8 @@
   }
 </script>
 
-<section class="mbon-timestrip" class:overlay class:collapsed aria-label={title}>
+<span bind:this={probe} style="display:none" aria-hidden="true"></span>
+<section class="mbon-timestrip" class:overlay class:collapsed class:sheet style={sheetStyle} aria-label={title}>
   {#if !collapsed}
     <button type="button" class="hgrip" aria-label="Resize {title} height (arrow keys)" onpointerdown={hdown} onpointermove={hmove} onpointerup={() => (hs = null)} onkeydown={hkey}><span></span></button>
   {/if}
@@ -143,7 +186,7 @@
     {/if}
     <div class="tools">
       {#if actions}{@render actions()}{/if}
-      <button type="button" class="tool" aria-expanded={!collapsed} aria-label={collapsed ? `Show ${title}` : `Collapse ${title}`} onclick={() => (collapsed = !collapsed)}>
+      <button type="button" class="tool" aria-expanded={!collapsed} aria-label={collapsed ? `Show ${title}` : `Collapse ${title}`} onclick={toggle}>
         <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
           {#if collapsed}<path d="M3 10l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" />{:else}<path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" />{/if}
         </svg>
@@ -235,7 +278,6 @@
     border-right: 1px solid var(--accent);
     pointer-events: none;
   }
-  @media (max-width: 640px) {
-    .mbon-timestrip.overlay { left: 0; right: 0; bottom: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
-  }
+  .mbon-timestrip.sheet { border-radius: var(--radius-lg) var(--radius-lg) 0 0; border-bottom: 0; box-shadow: none; }
+  .mbon-timestrip.sheet.collapsed { border-radius: 0; height: 44px; justify-content: center; }
 </style>

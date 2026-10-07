@@ -1,0 +1,37 @@
+/* demo page layout only */
+.demo-main { max-width: 1240px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+.demo-section { margin-top: var(--space-7); }
+.demo-section > .mbon-label { display: block; margin-bottom: var(--space-2); }
+.demo-section > h2 { margin-bottom: var(--space-2); }
+.demo-lead { font: var(--type-lead); max-width: 52rem; }
+.demo-stage {
+  position: relative;
+  height: 600px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(56, 167, 187, 0.25), transparent 55%),
+    radial-gradient(ellipse at 70% 65%, rgba(36, 86, 184, 0.22), transparent 60%),
+    linear-gradient(160deg, #cfe6ee, #9cc6d6 60%, #7fb2c7);
+}
+[data-theme="dark"] .demo-stage {
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(56, 167, 187, 0.22), transparent 55%),
+    radial-gradient(ellipse at 70% 65%, rgba(36, 86, 184, 0.25), transparent 60%),
+    linear-gradient(160deg, #0b2a40, #06192a 60%, #04131f);
+}
+.demo-hex { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.55; }
+.demo-sentence { margin: var(--space-5) 0 var(--space-4); }
+.demo-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.demo-theme { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
+.demo-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.demo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-4); }
+.demo-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
+.demo-swatch { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--bg-surface); }
+.demo-swatch > div { height: 56px; }
+.demo-swatch > p { margin: 0; padding: var(--space-2) var(--space-3); font: var(--text-xs) / 1.4 var(--font-mono); color: var(--text-body); }
+.demo-type > * { margin: 0 0 var(--space-2); }
+.demo-code { font: var(--text-sm) / 1.5 var(--font-mono); background: var(--bg-tint); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); overflow: auto; white-space: pre; }
+@media (max-width: 900px) { .demo-pair { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .demo-stage { height: 640px; } }

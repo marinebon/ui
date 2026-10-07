@@ -2,46 +2,19 @@
   Slider: a range input with a mono label, the current value, optional ticks and ± step buttons.
   `value` is bindable.
 -->
-<script lang="ts">
-  import { clamp, nextId } from "../utils.js";
-
-  type Tick = number | { value: number; label: string };
-
-  interface Props {
-    value?: number;
-    min?: number;
-    max?: number;
-    step?: number;
-    label: string;
-    ticks?: Tick[];
-    format?: (v: number) => string;
-    /** show − / + buttons */
-    buttons?: boolean;
-    disabled?: boolean;
-    oninput?: (value: number) => void;
-  }
-  let {
-    value = $bindable(0),
-    min = 0,
-    max = 100,
-    step = 1,
-    label,
-    ticks = [],
-    format = (v) => String(v),
-    buttons = true,
-    disabled = false,
-    oninput,
-  }: Props = $props();
-
-  const id = nextId("slider");
-  const norm = $derived(ticks.map((t) => (typeof t === "number" ? { value: t, label: format(t) } : t)));
-  const pct = (v: number) => ((v - min) / (max - min || 1)) * 100;
-
-  function nudge(dir: 1 | -1) {
-    const decimals = (String(step).split(".")[1] ?? "").length;
-    value = +clamp(value + dir * step, min, max).toFixed(decimals);
-    oninput?.(value);
-  }
+<script lang="ts">import { clamp, nextId } from "../utils.js";
+let { value = $bindable(0), min = 0, max = 100, step = 1, label, ticks = [], format = (v) => String(v), buttons = true, disabled = false, oninput } = $props();
+const id = nextId("slider");
+const norm = $derived(ticks.map((t) => typeof t === "number" ? {
+	value: t,
+	label: format(t)
+} : t));
+const pct = (v) => (v - min) / (max - min || 1) * 100;
+function nudge(dir) {
+	const decimals = (String(step).split(".")[1] ?? "").length;
+	value = +clamp(value + dir * step, min, max).toFixed(decimals);
+	oninput?.(value);
+}
 </script>
 
 <div class="mbon-slider" class:disabled>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@marinebon/ui · MBON UI kit</title>
+    <meta name="description" content="MBON UI kit: brand tokens and Svelte components for MBON web apps" />
+    <script>
+      // set the theme before first paint (same precedence as theme.ts: ?theme= > stored > system)
+      (function () {
+        var q = new URLSearchParams(location.search).get("theme");
+        var s = null;
+        try { s = localStorage.getItem("mbon-theme"); } catch (e) {}
+        var t = q === "dark" || q === "light" ? q : s === "dark" || s === "light" ? s
+          : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

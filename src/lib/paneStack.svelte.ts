@@ -25,6 +25,10 @@ class PaneStack {
       for (const e of this.entries) if (e.uid !== uid && !e.collapsed()) e.collapse();
     });
   }
+  /** uid of the first open entry */
+  firstOpen(): string | undefined {
+    return untrack(() => this.entries.find((e) => !e.collapsed())?.uid);
+  }
   /** layout of a pane in sheet mode: its slot among collapsed bars, and how many bars there are */
   layout(uid: string): { barIndex: number; bars: number } {
     const bars = this.entries.filter((e) => e.collapsed());
@@ -43,6 +47,16 @@ export function stackFor(container: Element): PaneStack {
 /** viewport bucket used to remember pane positions separately per screen class */
 export function viewportBucket(width: number = typeof window !== "undefined" ? window.innerWidth : 1280): string {
   return width < 640 ? "phone" : width < 1024 ? "tablet" : width < 1600 ? "laptop" : "wide";
+}
+
+/** height of a collapsed bottom-sheet bar, px */
+export const SHEET_BAR_H = 44;
+
+/** media query for sheet mode */
+export function sheetQuery(below: number): MediaQueryList | null {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia(`(max-width: ${below - 0.02}px)`)
+    : null;
 }
 
 let z = 10;

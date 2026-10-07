@@ -12,10 +12,10 @@
   the container must be positioned (position: relative/absolute) and sized.
 -->
 <script lang="ts">
-  import { onMount, tick, type Snippet } from "svelte";
+  import { onMount, tick, untrack, type Snippet } from "svelte";
   import type { PaneAnchor, PaneRect } from "../types.js";
   import { clamp, nextId } from "../utils.js";
-  import { raise, stackFor, viewportBucket } from "../paneStack.svelte.js";
+  import { raise, sheetQuery, SHEET_BAR_H, stackFor, viewportBucket } from "../paneStack.svelte.js";
 
   interface Props {
     title: string;
@@ -79,7 +79,7 @@
 
   const uid = nextId("pane");
   const PILL_H = 34;
-  const BAR_H = 44;
+  const BAR_H = SHEET_BAR_H;
 
   let probe: HTMLSpanElement | undefined = $state();
   let paneEl: HTMLElement | undefined = $state();
@@ -161,7 +161,7 @@
     const ro = typeof ResizeObserver !== "undefined" && container ? new ResizeObserver(measure) : null;
     if (container) ro?.observe(container);
 
-    const mq = typeof window.matchMedia === "function" ? window.matchMedia(`(max-width: ${sheetBelow - 0.02}px)`) : null;
+    const mq = sheetQuery(sheetBelow);
     const onmq = () => (sheet = !!mq?.matches);
     onmq();
     mq?.addEventListener?.("change", onmq);
@@ -177,9 +177,16 @@
     if (!stack || !open) return;
     return stack.add({ uid, title, collapsed: () => collapsed, collapse: () => (collapsed = true) });
   });
-  // sheet mode is an accordion: opening one sheet collapses the others
+  // sheet mode is an accordion: one open sheet. a pane the user restores claims it; otherwise the
+  // first open pane keeps it and later ones fold into bars.
+  let claim = false;
   $effect(() => {
-    if (sheet && open && !collapsed) stack?.only(uid);
+    if (!(sheet && open && !collapsed && stack)) return;
+    untrack(() => {
+      if (claim) stack.only(uid);
+      else if (stack.firstOpen() !== uid) collapsed = true;
+      claim = false;
+    });
   });
   const sheetLayout = $derived(sheet && stack ? stack.layout(uid) : { barIndex: -1, bars: 0 });
 
@@ -271,6 +278,7 @@
     pillEl?.focus();
   }
   async function restore() {
+    claim = true;
     collapsed = false;
     await tick();
     handleEl?.focus();
