@@ -1,0 +1,241 @@
+<!--
+  TimeStrip: a bottom pane shell for a time chart. the chart is the app's (a slot that receives
+  the plot width and height); the strip adds a title bar, a height grip, collapse, and a brush:
+  drag across the plot to select, click to clear, or use the keyboard (← → move, Shift+← → resize,
+  Esc clears). callbacks get pixels, fractions of the plot width, and domain values when `domain`
+  is given. `brush` ([f0, f1] fractions), `collapsed` and `height` are bindable.
+-->
+<script lang="ts">
+  import type { Snippet } from "svelte";
+  import type { BrushRange } from "../types.js";
+  import { clamp } from "../utils.js";
+
+  interface Props {
+    title?: string;
+    collapsed?: boolean;
+    height?: number;
+    minHeight?: number;
+    maxHeight?: number;
+    /** [start, end] of the x axis (e.g. epoch ms or years) for v0/v1 in callbacks */
+    domain?: [number, number];
+    /** px of the plot reserved left/right of the x range (axis gutters) */
+    plotLeft?: number;
+    plotRight?: number;
+    brush?: [number, number] | null;
+    /** overlay over the container bottom (default) or in normal flow */
+    overlay?: boolean;
+    children?: Snippet<[{ width: number; height: number }]>;
+    actions?: Snippet;
+    onbrush?: (r: BrushRange) => void;
+    onbrushend?: (r: BrushRange) => void;
+    onclear?: () => void;
+  }
+  let {
+    title = "time",
+    collapsed = $bindable(false),
+    height = $bindable(140),
+    minHeight = 72,
+    maxHeight = 420,
+    domain,
+    plotLeft = 0,
+    plotRight = 0,
+    brush = $bindable(null),
+    overlay = true,
+    children,
+    actions,
+    onbrush,
+    onbrushend,
+    onclear,
+  }: Props = $props();
+
+  let pw = $state(0);
+  let ph = $state(0);
+  const span = $derived(Math.max(1, pw - plotLeft - plotRight));
+
+  function range(f0: number, f1: number): BrushRange {
+    const a = Math.min(f0, f1);
+    const b = Math.max(f0, f1);
+    const r: BrushRange = { f0: a, f1: b, x0: plotLeft + a * span, x1: plotLeft + b * span };
+    if (domain) {
+      r.v0 = domain[0] + a * (domain[1] - domain[0]);
+      r.v1 = domain[0] + b * (domain[1] - domain[0]);
+    }
+    return r;
+  }
+
+  let start: { f: number; x: number } | null = null;
+  const toF = (e: PointerEvent, el: Element) => clamp((e.clientX - el.getBoundingClientRect().left - plotLeft) / span, 0, 1);
+
+  function down(e: PointerEvent) {
+    if (e.button !== 0) return;
+    const el = e.currentTarget as Element;
+    start = { f: toF(e, el), x: e.clientX };
+    el.setPointerCapture?.(e.pointerId);
+  }
+  function move(e: PointerEvent) {
+    if (!start || Math.abs(e.clientX - start.x) < 3) return;
+    const f = toF(e, e.currentTarget as Element);
+    const r = range(start.f, f);
+    brush = [r.f0, r.f1];
+    onbrush?.(r);
+  }
+  function up(e: PointerEvent) {
+    if (!start) return;
+    const moved = Math.abs(e.clientX - start.x) >= 3;
+    start = null;
+    if (moved && brush) onbrushend?.(range(brush[0], brush[1]));
+    else clear();
+  }
+  function clear() {
+    if (brush === null) return;
+    brush = null;
+    onclear?.();
+  }
+
+  function key(e: KeyboardEvent) {
+    if (e.key === "Escape" && brush) {
+      e.preventDefault();
+      clear();
+      return;
+    }
+    const d = e.key === "ArrowRight" ? 0.02 : e.key === "ArrowLeft" ? -0.02 : 0;
+    if (!d) return;
+    e.preventDefault();
+    let [a, b] = brush ?? [0.4, 0.6];
+    if (e.shiftKey) b = clamp(b + d, a + 0.01, 1);
+    else {
+      const w = b - a;
+      a = clamp(a + d, 0, 1 - w);
+      b = a + w;
+    }
+    brush = [a, b];
+    const r = range(a, b);
+    onbrush?.(r);
+    onbrushend?.(r);
+  }
+
+  // height grip
+  let hs: { y: number; h: number } | null = null;
+  function hdown(e: PointerEvent) {
+    hs = { y: e.clientY, h: height };
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    e.preventDefault();
+  }
+  function hmove(e: PointerEvent) {
+    if (hs) height = clamp(hs.h - (e.clientY - hs.y), minHeight, maxHeight);
+  }
+  function hkey(e: KeyboardEvent) {
+    const d = e.key === "ArrowUp" ? 10 : e.key === "ArrowDown" ? -10 : 0;
+    if (!d) return;
+    e.preventDefault();
+    height = clamp(height + d, minHeight, maxHeight);
+  }
+</script>
+
+<section class="mbon-timestrip" class:overlay class:collapsed aria-label={title}>
+  {#if !collapsed}
+    <button type="button" class="hgrip" aria-label="Resize {title} height (arrow keys)" onpointerdown={hdown} onpointermove={hmove} onpointerup={() => (hs = null)} onkeydown={hkey}><span></span></button>
+  {/if}
+  <header class="bar">
+    <h2 class="mbon-label t">{title}</h2>
+    {#if brush && !collapsed}
+      <button type="button" class="clear" onclick={clear}>clear selection</button>
+    {/if}
+    <div class="tools">
+      {#if actions}{@render actions()}{/if}
+      <button type="button" class="tool" aria-expanded={!collapsed} aria-label={collapsed ? `Show ${title}` : `Collapse ${title}`} onclick={() => (collapsed = !collapsed)}>
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          {#if collapsed}<path d="M3 10l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" />{:else}<path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" />{/if}
+        </svg>
+      </button>
+    </div>
+  </header>
+  {#if !collapsed}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+    <div
+      class="plot"
+      style:height="{height}px"
+      bind:clientWidth={pw}
+      bind:clientHeight={ph}
+      role="group"
+      aria-label="{title} selection: drag to select, arrow keys move, Shift+arrows resize, Esc clears"
+      tabindex="0"
+      onpointerdown={down}
+      onpointermove={move}
+      onpointerup={up}
+      onkeydown={key}
+    >
+      {@render children?.({ width: pw, height: ph })}
+      {#if brush}
+        <div class="brush" style:left="{plotLeft + brush[0] * span}px" style:width="{(brush[1] - brush[0]) * span}px" aria-hidden="true"></div>
+      {/if}
+    </div>
+  {/if}
+</section>
+
+<style>
+  .mbon-timestrip {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--pane-bg);
+    border: 1px solid var(--pane-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--pane-shadow);
+    color: var(--text-body);
+  }
+  .mbon-timestrip.overlay { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 4; }
+  .hgrip {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 12px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: ns-resize;
+    display: grid;
+    place-items: center;
+    touch-action: none;
+  }
+  .hgrip span { width: 32px; height: 4px; border-radius: 2px; background: var(--border-strong); }
+  .bar { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-2) var(--space-1) var(--space-3); }
+  .t { margin: 0; }
+  .clear {
+    border: 0;
+    background: transparent;
+    color: var(--link);
+    font: var(--text-xs) / 1 var(--font-sans);
+    cursor: pointer;
+    padding: 0.25em 0.4em;
+  }
+  .tools { margin-left: auto; display: flex; align-items: center; gap: var(--space-1); }
+  .tool {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+  }
+  .tool:hover { background: var(--control-hover); color: var(--text-strong); }
+  .plot { position: relative; margin: 0 var(--space-3) var(--space-3); touch-action: pan-y; cursor: crosshair; border-radius: var(--radius-xs); }
+  .brush {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    border-left: 1px solid var(--accent);
+    border-right: 1px solid var(--accent);
+    pointer-events: none;
+  }
+  @media (max-width: 640px) {
+    .mbon-timestrip.overlay { left: 0; right: 0; bottom: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  }
+</style>

@@ -1,0 +1,24 @@
+/* @marinebon/ui · self-hosted webfonts (SIL OFL 1.1, see fonts/OFL-*.txt).
+   Display: Space Grotesk (variable, 300–700) · Body/UI: IBM Plex Sans · Data: IBM Plex Mono.
+   No Google Fonts request: the woff2 files ship with the package. */
+
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-weight: 300 700; font-display: swap;
+  src: url("./fonts/SpaceGrotesk-Variable.woff2") format("woff2"); }
+
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("./fonts/IBMPlexSans-Regular.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: italic; font-weight: 400; font-display: swap;
+  src: url("./fonts/IBMPlexSans-Italic.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("./fonts/IBMPlexSans-Medium.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("./fonts/IBMPlexSans-SemiBold.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("./fonts/IBMPlexSans-Bold.woff2") format("woff2"); }
+
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("./fonts/IBMPlexMono-Regular.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("./fonts/IBMPlexMono-Medium.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("./fonts/IBMPlexMono-SemiBold.woff2") format("woff2"); }
