@@ -52,6 +52,8 @@
   let legendCollapsed = $state(false);
   let brushText = $state("drag across the chart");
   let brush = $state<[number, number] | null>(null);
+  let stripTab = $state("plot");
+  let stripExpanded = $state(false);
 
   const years = Array.from({ length: 26 }, (_, i) => 2000 + i);
   const counts = years.map((y, i) => Math.round(400 + 300 * Math.sin(i / 3) + i * 40 + ((y * 7919) % 97)));
@@ -176,8 +178,9 @@ import &#123; Header, Pane, Picker &#125; from "@marinebon/ui";</pre>
         </div>
       </Pane>
 
-      <TimeStrip title="records per year" domain={[2000, 2026]} bind:brush {onbrush} onclear={() => (brushText = "drag across the chart")} height={110}>
+      <TimeStrip title="records per year" tabs={[{ id: "plot", label: "Plot" }, { id: "table", label: "Table" }]} bind:active={stripTab} bind:expanded={stripExpanded} domain={[2000, 2026]} bind:brush {onbrush} onclear={() => (brushText = "drag across the chart")} height={110}>
         {#snippet children({ width, height })}
+          {#if stripTab === "plot"}
           <svg {width} {height} aria-hidden="true" style="display:block">
             {#each counts as c, i (i)}
               {@const bw = width / counts.length}
@@ -186,6 +189,14 @@ import &#123; Header, Pane, Picker &#125; from "@marinebon/ui";</pre>
             <text x="0" y="10" font-size="10" font-family="var(--font-mono)" fill="var(--text-muted)">2000</text>
             <text x={width} y="10" font-size="10" font-family="var(--font-mono)" fill="var(--text-muted)" text-anchor="end">2025</text>
           </svg>
+          {:else}
+            <table class="demo-table">
+              <thead><tr><th scope="col">year</th><th scope="col">records</th></tr></thead>
+              <tbody>
+                {#each counts as c, i (i)}<tr><td>{2000 + i}</td><td>{c.toLocaleString()}</td></tr>{/each}
+              </tbody>
+            </table>
+          {/if}
         {/snippet}
       </TimeStrip>
     </div>

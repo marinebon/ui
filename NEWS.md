@@ -1,3 +1,13 @@
+# @marinebon/ui 0.3.0
+
+- `TimeStrip` takes `tabs` (2 or more) and `bind:active`: a tab strip in the header, for example Plot and
+  Table. You switch the strip content on `active`; the brush works on the first tab.
+- `TimeStrip` has an Expand button (`expandable`, default true; `bind:expanded`) like Pane and Controls:
+  it fills its positioned container, Esc restores, and `height` is unchanged so restore returns to the
+  previous height.
+- Controls and TimeStrip now share one internal tab strip, so the tabs look and behave the same.
+- Demo: the time strip has Plot and Table tabs and the Expand button.
+
 # @marinebon/ui 0.2.0
 
 - `Sentence` is smaller: size `md` is now 22 px (was 28) and `lg` 28 px (was 36); on phones (640 px and

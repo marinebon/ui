@@ -1,8 +1,14 @@
 import { type Snippet } from "svelte";
-import type { BrushRange } from "../types.js";
+import type { BrushRange, ControlsTab } from "../types.js";
 interface Props {
     title?: string;
     collapsed?: boolean;
+    /** fill the positioned container (Esc restores); `height` is kept for the restore */
+    expanded?: boolean;
+    expandable?: boolean;
+    /** 2+ tabs render a tab strip in the header; the caller switches content on `active` */
+    tabs?: ControlsTab[];
+    active?: string;
     height?: number;
     minHeight?: number;
     maxHeight?: number;
@@ -25,6 +31,6 @@ interface Props {
     onbrushend?: (r: BrushRange) => void;
     onclear?: () => void;
 }
-declare const TimeStrip: import("svelte").Component<Props, {}, "height" | "collapsed" | "brush">;
+declare const TimeStrip: import("svelte").Component<Props, {}, "height" | "collapsed" | "expanded" | "active" | "brush">;
 type TimeStrip = ReturnType<typeof TimeStrip>;
 export default TimeStrip;

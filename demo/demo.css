@@ -35,3 +35,8 @@
 .demo-code { font: var(--text-sm) / 1.5 var(--font-mono); background: var(--bg-tint); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); overflow: auto; white-space: pre; }
 @media (max-width: 900px) { .demo-pair { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .demo-stage { height: 640px; } }
+
+/* TimeStrip table tab */
+.demo-table { width: 100%; max-width: 22rem; margin: 0 auto; border-collapse: collapse; font: var(--type-small); color: var(--text-body); }
+.demo-table th, .demo-table td { padding: 0.25em 0.6em; text-align: right; }
+.demo-table th { position: sticky; top: 0; background: var(--pane-bg); font: var(--type-label); text-transform: uppercase; letter-spacing: 0.14em; color: var(--label-color); }

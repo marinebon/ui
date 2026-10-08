@@ -3,17 +3,27 @@
   the plot width and height); the strip adds a title bar, a height grip, collapse, and a brush:
   drag across the plot to select, click to clear, or use the keyboard (← → move, Shift+← → resize,
   Esc clears). callbacks get pixels, fractions of the plot width, and domain values when `domain`
-  is given. `brush` ([f0, f1] fractions), `collapsed` and `height` are bindable.
+  is given. `brush` ([f0, f1] fractions), `collapsed`, `expanded`, `height` and `active` are bindable.
+  `tabs` (2+) puts a tab strip in the header (the caller switches the content on `active`; the brush
+  works on the first tab, the plot). `expandable` adds an Expand button that fills the positioned
+  container (Esc restores) without touching `height`.
 -->
 <script lang="ts">
   import { onMount, untrack, type Snippet } from "svelte";
-  import type { BrushRange } from "../types.js";
+  import type { BrushRange, ControlsTab } from "../types.js";
   import { clamp, nextId } from "../utils.js";
+  import TabStrip from "./TabStrip.svelte";
   import { sheetQuery, SHEET_BAR_H, stackFor } from "../paneStack.svelte.js";
 
   interface Props {
     title?: string;
     collapsed?: boolean;
+    /** fill the positioned container (Esc restores); `height` is kept for the restore */
+    expanded?: boolean;
+    expandable?: boolean;
+    /** 2+ tabs render a tab strip in the header; the caller switches content on `active` */
+    tabs?: ControlsTab[];
+    active?: string;
     height?: number;
     minHeight?: number;
     maxHeight?: number;
@@ -36,6 +46,10 @@
   let {
     title = "time",
     collapsed = $bindable(false),
+    expanded = $bindable(false),
+    expandable = true,
+    tabs,
+    active = $bindable(undefined),
     height = $bindable(140),
     minHeight = 72,
     maxHeight = 420,
@@ -85,10 +99,36 @@
     const bottom = collapsed ? (bars - 1 - barIndex) * SHEET_BAR_H : bars * SHEET_BAR_H;
     return `left:0;right:0;bottom:${bottom}px;`;
   });
+  const stripStyle = $derived(expanded && !collapsed ? "left:0;right:0;top:0;bottom:0;height:auto;" : sheetStyle);
   function toggle() {
     if (collapsed) claim = true;
     collapsed = !collapsed;
+    if (collapsed) expanded = false;
   }
+
+  // ---- tabs ---------------------------------------------------------------
+  const tabbed = $derived((tabs?.length ?? 0) >= 2);
+  const current = $derived(active ?? tabs?.[0]?.id);
+  // the brush belongs to the plot, the first tab
+  const brushing = $derived(!tabbed || current === tabs![0].id);
+  const panelId = `${uid}-panel`;
+
+  // ---- expand (mirrors Pane): Esc restores ---------------------------------
+  let expandEl: HTMLButtonElement | undefined = $state();
+  function toggleExpand() {
+    expanded = !expanded;
+  }
+  $effect(() => {
+    if (!expanded) return;
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.defaultPrevented) {
+        expanded = false;
+        expandEl?.focus();
+      }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  });
 
   let pw = $state(0);
   let ph = $state(0);
@@ -175,17 +215,29 @@
 </script>
 
 <span bind:this={probe} style="display:none" aria-hidden="true"></span>
-<section class="mbon-timestrip" class:overlay class:collapsed class:sheet style={sheetStyle} aria-label={title}>
-  {#if !collapsed}
+<section class="mbon-timestrip" class:overlay class:collapsed class:sheet class:expanded={expanded && !collapsed} style={stripStyle} aria-label={title}>
+  {#if !collapsed && !expanded}
     <button type="button" class="hgrip" aria-label="Resize {title} height (arrow keys)" onpointerdown={hdown} onpointermove={hmove} onpointerup={() => (hs = null)} onkeydown={hkey}><span></span></button>
   {/if}
   <header class="bar">
     <h2 class="mbon-label t">{title}</h2>
-    {#if brush && !collapsed}
+    {#if tabbed && !collapsed}
+      <TabStrip tabs={tabs!} bind:active idPrefix={uid} {panelId} label="{title} view" fill={false} />
+    {/if}
+    {#if brush && !collapsed && brushing}
       <button type="button" class="clear" onclick={clear}>clear selection</button>
     {/if}
     <div class="tools">
       {#if actions}{@render actions()}{/if}
+      {#if expandable && !collapsed}
+        <button type="button" class="tool" bind:this={expandEl} aria-pressed={expanded} aria-label={expanded ? `Restore ${title}` : `Expand ${title}`} title={expanded ? "Restore (Esc)" : "Expand"} onclick={toggleExpand}>
+          {#if expanded}
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 2v4H2M10 14v-4h4M14 6h-4V2M2 10h4v4" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+          {:else}
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 6V2h4M14 10v4h-4M10 2h4v4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+          {/if}
+        </button>
+      {/if}
       <button type="button" class="tool" aria-expanded={!collapsed} aria-label={collapsed ? `Show ${title}` : `Collapse ${title}`} onclick={toggle}>
         <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
           {#if collapsed}<path d="M3 10l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" />{:else}<path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" />{/if}
@@ -197,19 +249,23 @@
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
     <div
       class="plot"
-      style:height="{height}px"
+      class:fill={expanded}
+      class:still={!brushing}
+      id={panelId}
+      style:height={expanded ? undefined : `${height}px`}
       bind:clientWidth={pw}
       bind:clientHeight={ph}
-      role="group"
-      aria-label="{title} selection: drag to select, arrow keys move, Shift+arrows resize, Esc clears"
+      role={tabbed ? "tabpanel" : "group"}
+      aria-labelledby={tabbed ? `${uid}-tab-${current}` : undefined}
+      aria-label={tabbed ? undefined : `${title} selection: drag to select, arrow keys move, Shift+arrows resize, Esc clears`}
       tabindex="0"
-      onpointerdown={down}
-      onpointermove={move}
-      onpointerup={up}
-      onkeydown={key}
+      onpointerdown={brushing ? down : undefined}
+      onpointermove={brushing ? move : undefined}
+      onpointerup={brushing ? up : undefined}
+      onkeydown={brushing ? key : undefined}
     >
       {@render children?.({ width: pw, height: ph })}
-      {#if brush}
+      {#if brush && brushing}
         <div class="brush" style:left="{plotLeft + brush[0] * span}px" style:width="{(brush[1] - brush[0]) * span}px" aria-hidden="true"></div>
       {/if}
     </div>
@@ -254,6 +310,7 @@
     cursor: pointer;
     padding: 0.25em 0.4em;
   }
+  .bar :global(.tabs) { flex: 0 1 auto; margin-left: var(--space-2); }
   .tools { margin-left: auto; display: flex; align-items: center; gap: var(--space-1); }
   .tool {
     display: grid;
@@ -269,6 +326,8 @@
   }
   .tool:hover { background: var(--control-hover); color: var(--text-strong); }
   .plot { position: relative; margin: 0 var(--space-3) var(--space-3); touch-action: pan-y; cursor: crosshair; border-radius: var(--radius-xs); }
+  .plot.fill { flex: 1 1 0; min-height: 0; }
+  .plot.still { cursor: auto; overflow: auto; }
   .brush {
     position: absolute;
     top: 0;
@@ -280,4 +339,5 @@
   }
   .mbon-timestrip.sheet { border-radius: var(--radius-lg) var(--radius-lg) 0 0; border-bottom: 0; box-shadow: none; }
   .mbon-timestrip.sheet.collapsed { border-radius: 0; height: 44px; justify-content: center; }
+  .mbon-timestrip.expanded { position: absolute; z-index: var(--z-sticky); /* above raised Panes */  border-radius: var(--radius-md); box-shadow: var(--pane-shadow); }
 </style>

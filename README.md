@@ -330,8 +330,9 @@ Press <Kbd>Esc</Kbd> to restore.
 ### TimeStrip
 
 A bottom pane shell for a time chart. The chart is the app's: the slot receives the plot `width`
-and `height`. The strip adds a title bar, a height grip, collapse, and a brush (drag to select, click
-to clear; ← → move, Shift+← → resize, Esc clears). Callbacks get pixels (`x0`, `x1`), fractions of
+and `height`. The strip adds a title bar, a height grip, collapse, an Expand button, optional tabs
+(for example Plot / Table), and a brush (drag to select, click to clear; ← → move, Shift+← → resize,
+Esc clears; the brush works on the first tab, the plot). Callbacks get pixels (`x0`, `x1`), fractions of
 the plot (`f0`, `f1`) and, with `domain`, values (`v0`, `v1`). On phones it joins the Panes'
 bottom-sheet stack.
 
@@ -342,7 +343,23 @@ bottom-sheet stack.
 </TimeStrip>
 ```
 
-Props: `title`, `bind:collapsed`, `bind:height` (140), `minHeight`, `maxHeight`, `domain?`,
+Tabs and Expand: pass `tabs` (2 or more `{id, label}`) and `bind:active`; the strip shows the same
+segmented tabs as Controls in its header (← → Home End move, selected tab in accent) and you switch
+the `children` content on `active`. `expandable` (true) adds an Expand button; `bind:expanded` makes
+the strip fill its positioned container (<kbd>Esc</kbd> restores), and `height` is left alone so
+restore returns to the previous height.
+
+```svelte
+<TimeStrip title="records per year" tabs={[{ id: "plot", label: "Plot" }, { id: "table", label: "Table" }]}
+  bind:active={tab} bind:expanded>
+  {#snippet children({ width, height })}
+    {#if tab === "plot"}<MyPlot {width} {height} />{:else}<MyTable />{/if}
+  {/snippet}
+</TimeStrip>
+```
+
+Props: `title`, `bind:collapsed`, `bind:expanded` (false), `expandable` (true), `tabs?`, `bind:active?`,
+`bind:height` (140), `minHeight`, `maxHeight`, `domain?`,
 `plotLeft`, `plotRight`, `bind:brush` (`[f0, f1] | null`), `overlay` (true), `sheetBelow`,
 `onbrush?`, `onbrushend?`, `onclear?`; snippets `children({width, height})`, `actions`.
 
