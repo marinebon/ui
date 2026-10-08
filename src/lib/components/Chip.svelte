@@ -104,17 +104,19 @@
   .chip {
     display: inline-flex;
     align-items: baseline;
+    vertical-align: baseline;
     gap: 0.2em;
     font: inherit;
+    font-size: 0.9em;
     letter-spacing: inherit;
     color: var(--chip-fg);
     background: var(--chip-bg);
     border: 1px solid var(--facet-outline);
-    border-radius: 0.3em;
-    padding: 0 0.3em;
+    border-radius: var(--radius-sm);
+    padding: 0.05em 0.35em;
     margin: 0.05em 0;
     cursor: pointer;
-    line-height: 1.2;
+    line-height: 1.15;
   }
   .chip:hover { filter: brightness(1.12); }
   .chip[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--accent); }

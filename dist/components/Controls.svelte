@@ -81,8 +81,16 @@ function onkeydown(e, i) {
     cursor: pointer;
   }
   [role="tab"]:hover { color: var(--text-strong); }
-  [role="tab"][aria-selected="true"] { background: var(--bg-surface); color: var(--text-strong); box-shadow: var(--shadow-xs); }
-  .num { font-size: 1.15em; color: var(--label-color); }
+  /* selected: accent text (--link = teal-600 on light, teal-300 on dark; --accent itself is only 2.8:1 on white),
+     semibold, and a 1px accent ring. never an underline bar. */
+  [role="tab"][aria-selected="true"] {
+    background: var(--bg-surface);
+    color: var(--link);
+    font-weight: var(--fw-semibold);
+    box-shadow: var(--shadow-xs), inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .num { font-size: 1.15em; color: var(--text-muted); }
+  [role="tab"][aria-selected="true"] .num { color: var(--link); }
   .tl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .panel { min-height: 4rem; }
   .panel:focus { outline: none; }

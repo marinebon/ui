@@ -203,7 +203,8 @@ focus returns to the chip. The `sub` slot is the second line (colour scale, coun
 </Sentence>
 ```
 
-Sentence props: `level` (1), `size` (`md`|`lg`); snippets `children`, `sub`.
+Sentence props: `level` (1), `size` (`md` 22 px, `lg` 28 px; one step smaller on phones); snippets `children`, `sub`.
+A Chip renders at 0.9em of the sentence text.
 Chip props: `label`, `facet` (`place`|`method`|`org`|`type`|`portal`|`content`|`topic`|`dataset`|`delivery`),
 `bind:open`, `title` (popover name), `width` ("20rem"), `onopen?`, `onclose?`; snippet `children(close)`.
 

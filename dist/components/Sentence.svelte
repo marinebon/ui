@@ -16,13 +16,13 @@ export {};
   .line {
     font-family: var(--font-display);
     font-weight: var(--fw-semibold);
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
     line-height: 1.35;
     letter-spacing: var(--ls-tight);
     color: var(--text-heading);
     text-wrap: balance;
   }
-  .lg .line { font-size: var(--text-2xl); }
+  .lg .line { font-size: var(--text-xl); }
   .sub {
     display: flex;
     flex-wrap: wrap;
@@ -32,7 +32,7 @@ export {};
     color: var(--text-body);
   }
   @media (max-width: 640px) {
-    .line { font-size: var(--text-lg); }
-    .lg .line { font-size: var(--text-xl); }
+    .line { font-size: var(--text-md); }
+    .lg .line { font-size: var(--text-lg); }
   }
 </style>
