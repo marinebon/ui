@@ -5,6 +5,8 @@
 import { untrack } from "svelte";
 class PaneStack {
     entries = $state([]);
+    /** px of the container's bottom covered by an overlay TimeStrip (from its top edge down); Panes end above it */
+    floor = $state(0);
     // untrack: callers run inside effects, which must not depend on the whole stack
     add(e) {
         untrack(() => (this.entries = [...this.entries, e]));

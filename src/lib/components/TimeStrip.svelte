@@ -100,6 +100,22 @@
     return `left:0;right:0;bottom:${bottom}px;`;
   });
   const stripStyle = $derived(expanded && !collapsed ? "left:0;right:0;top:0;bottom:0;height:auto;" : sheetStyle);
+  // not as a sheet, nor expanded: tell the container's Panes how much of its bottom the strip covers, so
+  // they end above it instead of running under it
+  let stripEl: HTMLElement | undefined = $state();
+  $effect(() => {
+    const s = stack, el = stripEl, c = container;
+    if (!s || !el || !c || sheet || (expanded && !collapsed)) return;
+    const measure = () => (s.floor = Math.max(0, Math.round(c.getBoundingClientRect().bottom - el.getBoundingClientRect().top)));
+    measure();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    ro?.observe(el);
+    ro?.observe(c);
+    return () => {
+      ro?.disconnect();
+      s.floor = 0;
+    };
+  });
   function toggle() {
     if (collapsed) claim = true;
     collapsed = !collapsed;
@@ -215,7 +231,7 @@
 </script>
 
 <span bind:this={probe} style="display:none" aria-hidden="true"></span>
-<section class="mbon-timestrip" class:overlay class:collapsed class:sheet class:expanded={expanded && !collapsed} style={stripStyle} aria-label={title}>
+<section bind:this={stripEl} class="mbon-timestrip" class:overlay class:collapsed class:sheet class:expanded={expanded && !collapsed} style={stripStyle} aria-label={title}>
   {#if !collapsed && !expanded}
     <button type="button" class="hgrip" aria-label="Resize {title} height (arrow keys)" onpointerdown={hdown} onpointermove={hmove} onpointerup={() => (hs = null)} onkeydown={hkey}><span></span></button>
   {/if}

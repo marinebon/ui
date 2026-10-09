@@ -1,6 +1,6 @@
 {
   "name": "@marinebon/ui",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "MBON UI kit: brand tokens and Svelte components for MBON web apps",
   "license": "MIT",
   "author": "Ocean Metrics LLC (https://oceanmetrics.io)",

@@ -9,6 +9,7 @@
   - position and size remembered per viewport class in localStorage (key mbon-pane:<id>:<bucket>)
   - `open`, `collapsed`, `expanded` are bindable so the app can mirror them in the URL
   - below `sheetBelow` px of viewport width panes become stacked bottom sheets
+  - an overlay TimeStrip in the same container keeps the panes above it (`margin` px clear of its top)
   the container must be positioned (position: relative/absolute) and sized.
 -->
 <script lang="ts">
@@ -102,7 +103,7 @@
     const bottom = anchor.startsWith("bottom");
     const x = right ? cw - w - margin - offset.x : margin + offset.x;
     const hh = h || paneEl?.offsetHeight || 200;
-    const y = bottom ? ch - hh - margin - offset.y : margin + offset.y;
+    const y = bottom ? ch - floor - hh - margin - offset.y : margin + offset.y;
     return { x: Math.max(0, x), y: Math.max(0, y), w, h };
   }
 
@@ -189,6 +190,14 @@
     });
   });
   const sheetLayout = $derived(sheet && stack ? stack.layout(uid) : { barIndex: -1, bars: 0 });
+  // what an overlay TimeStrip covers at the container's bottom (sheets stack instead): the pane ends above it
+  const floor = $derived(sheet ? 0 : (stack?.floor ?? 0));
+  $effect(() => {
+    void floor; // a bottom-anchored pane at home follows the strip's top
+    untrack(() => {
+      if (!moved && anchor.startsWith("bottom") && cw) rect = homeRect();
+    });
+  });
 
   // Esc restores an expanded pane
   $effect(() => {
@@ -296,7 +305,7 @@
     const h = rect.h || paneEl?.offsetHeight || 200;
     const cx = rect.x + rect.w / 2;
     const cy = rect.y + h / 2;
-    const d = { left: cx, right: cw - cx, top: cy, bottom: ch - cy };
+    const d = { left: cx, right: cw - cx, top: cy, bottom: ch - floor - cy };
     return (Object.entries(d).sort((a, b) => a[1] - b[1])[0]?.[0] ?? "left") as keyof typeof d;
   });
 
@@ -305,7 +314,7 @@
       const k = sheetLayout.bars - 1 - sheetLayout.barIndex;
       return `left:0;right:0;bottom:${k * BAR_H}px;`;
     }
-    const y = clamp(rect.y, margin, ch - PILL_H - margin);
+    const y = clamp(rect.y, margin, ch - floor - PILL_H - margin);
     const x = clamp(rect.x, margin, cw - 120 - margin);
     switch (edge) {
       case "left":
@@ -315,14 +324,14 @@
       case "top":
         return `top:${margin}px;left:${x}px;`;
       default:
-        return `bottom:${margin}px;left:${x}px;`;
+        return `bottom:${margin + floor}px;left:${x}px;`;
     }
   });
 
   const paneStyle = $derived.by(() => {
     if (expanded) return `left:${margin}px;top:${margin}px;right:${margin}px;bottom:${margin}px;z-index:${z};`;
     if (sheet) return `left:0;right:0;bottom:${sheetLayout.bars * BAR_H}px;max-height:60%;z-index:${z};`;
-    const h = rect.h ? `height:${rect.h}px;` : `max-height:${Math.max(minHeight, ch - rect.y - margin)}px;`;
+    const h = rect.h ? `height:${rect.h}px;` : `max-height:${Math.max(minHeight, ch - floor - rect.y - margin)}px;`;
     return `left:${rect.x}px;top:${rect.y}px;width:${rect.w}px;${h}z-index:${z};`;
   });
 </script>

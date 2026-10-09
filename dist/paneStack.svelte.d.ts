@@ -10,6 +10,8 @@ export interface PaneEntry {
 }
 declare class PaneStack {
     entries: PaneEntry[];
+    /** px of the container's bottom covered by an overlay TimeStrip (from its top edge down); Panes end above it */
+    floor: number;
     add(e: PaneEntry): () => PaneEntry[];
     /** collapse every other pane (accordion, used in sheet mode) */
     only(uid: string): void;

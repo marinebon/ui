@@ -1,3 +1,10 @@
+# @marinebon/ui 0.3.1
+
+- `Pane` ends 12 px (`margin`) above an overlay `TimeStrip` in the same container instead of running under
+  it: the strip reports the height it covers at the container's bottom, and a pane's `max-height`, a
+  bottom-anchored home and a pill docked to the bottom edge stay above it. An expanded strip or the phone
+  bottom sheets leave the panes as before.
+
 # @marinebon/ui 0.3.0
 
 - `TimeStrip` takes `tabs` (2 or more) and `bind:active`: a tab strip in the header, for example Plot and
