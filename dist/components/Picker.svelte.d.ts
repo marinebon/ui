@@ -12,6 +12,9 @@ interface Props {
     modeToggle?: boolean;
     /** max list height (css length) */
     maxHeight?: string;
+    /** in a fill Pane or Controls (not a phone sheet), the list takes the height left to it instead of
+     * `maxHeight` (at least 8rem); every wrapper between the panel and the Picker needs `.mbon-fill` */
+    fill?: boolean;
     emptyText?: string;
     /** custom row content */
     row?: Snippet<[PickerItem]>;

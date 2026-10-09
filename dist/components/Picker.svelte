@@ -5,7 +5,7 @@
   `value` (selected id) and `mode` are bindable.
 -->
 <script lang="ts">import { clamp, nextId, pickerMatches } from "../utils.js";
-let { items, value = $bindable(null), mode = $bindable(undefined), label = "options", showLabel = false, placeholder = "Search…", modeToggle, maxHeight = "18rem", emptyText = "No matches", row, onselect } = $props();
+let { items, value = $bindable(null), mode = $bindable(undefined), label = "options", showLabel = false, placeholder = "Search…", modeToggle, maxHeight = "18rem", fill = false, emptyText = "No matches", row, onselect } = $props();
 const id = nextId("picker");
 const hasGroups = $derived(items.some((it) => it.group));
 const effMode = $derived(mode ?? (hasGroups ? "group" : "az"));
@@ -94,7 +94,7 @@ function onkeydown(e) {
 }
 </script>
 
-<div class="mbon-picker">
+<div class="mbon-picker" class:fill>
   {#if showLabel}<span class="mbon-label" id="{id}-lab">{label}</span>{/if}
   <div class="bar">
     <input
@@ -189,6 +189,8 @@ function onkeydown(e) {
   }
   .mode button[aria-pressed="true"] { background: var(--selected-bg); color: var(--text-strong); }
   .list { position: relative; overflow: auto; overscroll-behavior: contain; margin: 0 calc(-1 * var(--space-1)); }
+  :global(.mbon-pane.fill) .mbon-picker.fill { flex: 1; min-height: 0; }
+  :global(.mbon-pane.fill) .mbon-picker.fill .list { flex: 1; min-height: 8rem; max-height: none !important; }
   .ghead { padding: var(--space-2) var(--space-2) var(--space-1); }
   .opt {
     display: flex;

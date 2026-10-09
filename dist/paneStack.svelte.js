@@ -1,8 +1,31 @@
 /**
- * pane registry per container, so that at phone width the panes in one container stack as
- * bottom sheets (one open sheet, the rest as bars beneath it) instead of overlapping.
+ * pane registry per container: at phone width the panes in one container stack as bottom sheets (one
+ * open sheet, the rest as bars beneath it) instead of overlapping, and wider, it is the one place the
+ * panes and an overlay TimeStrip keep their gaps: the strip reports the height it covers (`floor`), a
+ * Pane ends `margin` px above it, and a Pane that reaches down beside it (`fill`, or resized that tall)
+ * reports its side (`insets()`), so the strip starts `margin` px clear of it.
  */
 import { untrack } from "svelte";
+/** which side a pane at `x`..`x + w` (reaching `bottom`) takes from a strip whose top is `ch - floor`;
+ * null when it ends above the strip. The side is the half of the container holding the pane's centre. */
+export function paneSide(r, cw, ch, floor, margin) {
+    if (!cw || !floor || r.bottom <= ch - floor)
+        return null;
+    return r.x + r.w / 2 < cw / 2 ? { left: Math.round(r.x + r.w + margin) } : { right: Math.round(cw - r.x + margin) };
+}
+/** the narrowest overlay TimeStrip drawn beside the panes; below it the strip spans its container */
+export const STRIP_MIN_WIDTH = 320;
+/** an overlay strip's left and right edges (px from the container's sides) beside the panes' sides, at
+ * least `margin`; null (span the container) when that would leave it narrower than STRIP_MIN_WIDTH */
+export function stripEdges(sides, cw, margin) {
+    const left = Math.max(margin, ...sides.map((s) => s.left ?? 0));
+    const right = Math.max(margin, ...sides.map((s) => s.right ?? 0));
+    if (left === margin && right === margin)
+        return null;
+    if (cw && cw - left - right < STRIP_MIN_WIDTH)
+        return null;
+    return { left, right };
+}
 class PaneStack {
     entries = $state([]);
     /** px of the container's bottom covered by an overlay TimeStrip (from its top edge down); Panes end above it */
@@ -19,6 +42,10 @@ class PaneStack {
                 if (e.uid !== uid && !e.collapsed())
                     e.collapse();
         });
+    }
+    /** the sides the panes take from an overlay TimeStrip (read inside a $derived: it follows them) */
+    sides() {
+        return this.entries.map((e) => e.side?.()).filter((s) => !!s);
     }
     /** uid of the first open entry */
     firstOpen() {

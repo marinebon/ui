@@ -13,7 +13,7 @@
   import type { BrushRange, ControlsTab } from "../types.js";
   import { clamp, nextId } from "../utils.js";
   import TabStrip from "./TabStrip.svelte";
-  import { sheetQuery, SHEET_BAR_H, stackFor } from "../paneStack.svelte.js";
+  import { sheetQuery, SHEET_BAR_H, stackFor, stripEdges } from "../paneStack.svelte.js";
 
   interface Props {
     title?: string;
@@ -99,14 +99,25 @@
     const bottom = collapsed ? (bars - 1 - barIndex) * SHEET_BAR_H : bars * SHEET_BAR_H;
     return `left:0;right:0;bottom:${bottom}px;`;
   });
-  const stripStyle = $derived(expanded && !collapsed ? "left:0;right:0;top:0;bottom:0;height:auto;" : sheetStyle);
+  // beside the panes that reach down next to it (a `fill` Controls): start `MARGIN` px clear of them
+  const MARGIN = 12;
+  let cw = $state(0);
+  const besideStyle = $derived.by(() => {
+    if (!stack || sheet) return undefined;
+    const e = stripEdges(stack.sides(), cw, MARGIN);
+    return e ? `left:${e.left}px;right:${e.right}px;` : undefined;
+  });
+  const stripStyle = $derived(expanded && !collapsed ? "left:0;right:0;top:0;bottom:0;height:auto;" : (sheetStyle ?? besideStyle));
   // not as a sheet, nor expanded: tell the container's Panes how much of its bottom the strip covers, so
   // they end above it instead of running under it
   let stripEl: HTMLElement | undefined = $state();
   $effect(() => {
     const s = stack, el = stripEl, c = container;
     if (!s || !el || !c || sheet || (expanded && !collapsed)) return;
-    const measure = () => (s.floor = Math.max(0, Math.round(c.getBoundingClientRect().bottom - el.getBoundingClientRect().top)));
+    const measure = () => {
+      s.floor = Math.max(0, Math.round(c.getBoundingClientRect().bottom - el.getBoundingClientRect().top));
+      cw = c.clientWidth;
+    };
     measure();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
     ro?.observe(el);

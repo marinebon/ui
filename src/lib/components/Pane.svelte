@@ -9,14 +9,17 @@
   - position and size remembered per viewport class in localStorage (key mbon-pane:<id>:<bucket>)
   - `open`, `collapsed`, `expanded` are bindable so the app can mirror them in the URL
   - below `sheetBelow` px of viewport width panes become stacked bottom sheets
-  - an overlay TimeStrip in the same container keeps the panes above it (`margin` px clear of its top)
+  - an overlay TimeStrip in the same container keeps the panes above it (`margin` px clear of its top);
+    a `fill` pane runs the container's full height instead and the strip starts `margin` px beside it
+    (as it does beside any pane resized down past its top); content inside a fill pane can grow with it
+    (Controls, Picker `fill`, the `.mbon-fill` class)
   the container must be positioned (position: relative/absolute) and sized.
 -->
 <script lang="ts">
   import { onMount, tick, untrack, type Snippet } from "svelte";
   import type { PaneAnchor, PaneRect } from "../types.js";
   import { clamp, nextId } from "../utils.js";
-  import { raise, sheetQuery, SHEET_BAR_H, stackFor, viewportBucket } from "../paneStack.svelte.js";
+  import { paneSide, raise, sheetQuery, SHEET_BAR_H, stackFor, viewportBucket } from "../paneStack.svelte.js";
 
   interface Props {
     title: string;
@@ -31,6 +34,9 @@
     width?: number;
     /** fixed height in px; default fits the content */
     height?: number;
+    /** run the container's full height (top to bottom, `margin` px clear) instead of ending above an
+     * overlay TimeStrip, which then starts beside the pane; its content can grow to fill it */
+    fill?: boolean;
     minWidth?: number;
     minHeight?: number;
     margin?: number;
@@ -61,6 +67,7 @@
     offset = { x: 0, y: 0 },
     width = 320,
     height,
+    fill = false,
     minWidth = 200,
     minHeight = 96,
     margin = 12,
@@ -176,7 +183,7 @@
   const stack = $derived(container ? stackFor(container) : null);
   $effect(() => {
     if (!stack || !open) return;
-    return stack.add({ uid, title, collapsed: () => collapsed, collapse: () => (collapsed = true) });
+    return stack.add({ uid, title, collapsed: () => collapsed, collapse: () => (collapsed = true), side });
   });
   // sheet mode is an accordion: one open sheet. a pane the user restores claims it; otherwise the
   // first open pane keeps it and later ones fold into bars.
@@ -190,6 +197,14 @@
     });
   });
   const sheetLayout = $derived(sheet && stack ? stack.layout(uid) : { barIndex: -1, bars: 0 });
+  // a fill pane at its own height runs to the container's bottom; one the user resized keeps that height
+  const filling = $derived(fill && !sheet && !expanded && !rect.h);
+  /** the side this pane takes from an overlay TimeStrip: only when it reaches down beside the strip */
+  function side() {
+    if (collapsed || expanded || sheet) return null;
+    const h = rect.h || (filling ? Math.max(minHeight, ch - rect.y - margin) : 0);
+    return h ? paneSide({ x: rect.x, w: rect.w, bottom: rect.y + h }, cw, ch, floor, margin) : null;
+  }
   // what an overlay TimeStrip covers at the container's bottom (sheets stack instead): the pane ends above it
   const floor = $derived(sheet ? 0 : (stack?.floor ?? 0));
   $effect(() => {
@@ -331,7 +346,11 @@
   const paneStyle = $derived.by(() => {
     if (expanded) return `left:${margin}px;top:${margin}px;right:${margin}px;bottom:${margin}px;z-index:${z};`;
     if (sheet) return `left:0;right:0;bottom:${sheetLayout.bars * BAR_H}px;max-height:60%;z-index:${z};`;
-    const h = rect.h ? `height:${rect.h}px;` : `max-height:${Math.max(minHeight, ch - floor - rect.y - margin)}px;`;
+    const h = rect.h
+      ? `height:${rect.h}px;`
+      : filling
+        ? `height:${Math.max(minHeight, ch - rect.y - margin)}px;`
+        : `max-height:${Math.max(minHeight, ch - floor - rect.y - margin)}px;`;
     return `left:${rect.x}px;top:${rect.y}px;width:${rect.w}px;${h}z-index:${z};`;
   });
 </script>
@@ -358,7 +377,8 @@
       class="mbon-pane {cls}"
       class:expanded
       class:sheet
-      class:fit={!rect.h && !expanded}
+      class:fit={!rect.h && !expanded && !filling}
+      class:fill={fill && !sheet}
       style={paneStyle}
       aria-labelledby="{uid}-t"
       onpointerdowncapture={() => (z = raise())}
@@ -474,6 +494,9 @@
   }
   .tool:hover { background: var(--control-hover); color: var(--text-strong); }
   .body { flex: 1; min-height: 0; overflow: auto; padding: 0 var(--space-3) var(--space-3); overscroll-behavior: contain; }
+  /* a fill pane lays its content out as a column, so a child with `flex: 1` (Controls, a fill Picker,
+     `.mbon-fill`) grows with the pane */
+  .mbon-pane.fill .body { display: flex; flex-direction: column; }
   .foot {
     flex: none;
     padding: var(--space-2) var(--space-3);

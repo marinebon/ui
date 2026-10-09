@@ -1,3 +1,19 @@
+# @marinebon/ui 0.4.0
+
+- **One layout for the panes and the TimeStrip.** `Pane` (and `Controls`) take `fill`: the pane runs
+  the full height of its container, and an overlay `TimeStrip` starts 12 px beside it instead of under
+  it. The strip also moves beside any pane resized down past its top. It spans the container again when
+  the pane is folded, shortened above it or dragged to the other half, or when the strip would be
+  narrower than 320 px (`STRIP_MIN_WIDTH`). Phone sheets and an expanded strip are unchanged. Apps no
+  longer size panes around the strip by hand (obis-hex and erddap-places did).
+- In a fill pane the body is a column, so content can grow with it. With `Controls fill` the tabs stay
+  put and the tab panel takes the rest of the height, scrolling itself. `Picker fill` gives its list the
+  height left (at least 8 rem) instead of `maxHeight`. `.mbon-fill` (base.css) goes on each wrapper in
+  between. On a phone sheet, `maxHeight` applies as before.
+- `paneSide()`, `stripEdges()`, `STRIP_MIN_WIDTH` and the `PaneSide` type are exported; `PaneStack` has
+  `sides()`. New `tests/PaneFill.test.ts`.
+- Demo: the Controls use `fill`, with fill Pickers for datasets and places.
+
 # @marinebon/ui 0.3.1
 
 - `Pane` ends 12 px (`margin`) above an overlay `TimeStrip` in the same container instead of running under

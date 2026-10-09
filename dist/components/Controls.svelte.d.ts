@@ -22,6 +22,8 @@ interface Props {
     };
     width?: number;
     height?: number;
+    /** run the container's full height, the TimeStrip beside it (see Pane `fill`) */
+    fill?: boolean;
     numbered?: boolean;
     onchange?: (id: string) => void;
 }

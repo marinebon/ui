@@ -141,12 +141,13 @@ import &#123; Header, Pane, Picker &#125; from "@marinebon/ui";</pre>
           { id: "delivery", label: "delivery" },
         ]}
         bind:active={tab}
+        fill
       >
         {#snippet panel(id)}
           {#if id === "dataset"}
-            <Picker items={datasets} bind:value={dataset} label="datasets" maxHeight="12rem" />
+            <Picker items={datasets} bind:value={dataset} label="datasets" maxHeight="12rem" fill />
           {:else if id === "place"}
-            <Picker items={places} bind:value={place} label="places" maxHeight="12rem" />
+            <Picker items={places} bind:value={place} label="places" maxHeight="12rem" fill />
           {:else if id === "method"}
             <div style="display:flex;flex-direction:column;gap:var(--space-4)">
               <Picker items={methods} bind:value={method} label="methods" maxHeight="9rem" />

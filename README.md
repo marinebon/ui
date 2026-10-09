@@ -159,8 +159,17 @@ stack as bottom sheets: one open, the rest as bars beneath it.
 Props: `title`, `id?` (storage key), `bind:open`, `bind:collapsed`, `bind:expanded`, `anchor`
 (`top-left`|`top-right`|`bottom-left`|`bottom-right`), `offset {x,y}`, `width` (320), `height?`
 (default fits content), `minWidth`, `minHeight`, `margin` (12), `draggable`, `resizable`,
-`collapsible`, `expandable`, `closable`, `pillLabel?`, `sheetBelow` (640), `onclose?`; snippets
-`children`, `actions`, `footer`. Method: `home()`.
+`collapsible`, `expandable`, `closable`, `pillLabel?`, `sheetBelow` (640), `fill` (false), `onclose?`;
+snippets `children`, `actions`, `footer`. Method: `home()`.
+
+**Panes and the TimeStrip share one layout** (`PaneStack`, per container), so no app sizes them by hand. An
+overlay TimeStrip reports the height it covers, and a Pane ends `margin` (12) px above it. A `fill` Pane
+runs the container's full height instead (top and bottom `margin` px clear), and the strip starts 12 px
+beside it; this also happens beside any pane resized down past the strip's top. The strip goes back to
+the full width when the pane is folded, shortened above it, dragged to the other half, or when the strip
+would be narrower than 320 px. Phone sheets and an expanded strip ignore all of this. In a fill pane the
+body is a column, so content can grow with it: Controls `fill`, Picker `fill`, and `.mbon-fill` on each
+wrapper in between.
 
 ### Controls
 
@@ -179,8 +188,25 @@ tabs. Use the pipeline order: dataset → place → method → delivery.
 ```
 
 Props: `tabs`, `bind:active`, `numbered` (true), `onchange?`, and the Pane props (`title`, `id`,
-`bind:open`, `bind:collapsed`, `bind:expanded`, `anchor`, `offset`, `width`, `height`); snippets
+`bind:open`, `bind:collapsed`, `bind:expanded`, `anchor`, `offset`, `width`, `height`, `fill`); snippets
 `panel(id)`, `tabLabel(tab, i)`, `footer`, `actions`.
+
+With `fill`, the Controls run the full height of the map, the TimeStrip sits beside them, and the tab
+panel fills the rest of the pane under fixed tabs, scrolling itself. A long list then gets the whole
+height. Use this when a tab is a long Picker (taxa, places):
+
+```svelte
+<Controls fill tabs={tabs} bind:active={tab}>
+  {#snippet panel(id)}
+    {#if id === "place"}
+      <div class="mbon-fill">   <!-- every wrapper between the panel and the Picker -->
+        <Picker fill items={places} bind:value={place} label="places" />
+        <p class="hint">shown under the list</p>
+      </div>
+    {/if}
+  {/snippet}
+</Controls>
+```
 
 ### Sentence and Chip
 
@@ -334,7 +360,8 @@ and `height`. The strip adds a title bar, a height grip, collapse, an Expand but
 (for example Plot / Table), and a brush (drag to select, click to clear; ← → move, Shift+← → resize,
 Esc clears; the brush works on the first tab, the plot). Callbacks get pixels (`x0`, `x1`), fractions of
 the plot (`f0`, `f1`) and, with `domain`, values (`v0`, `v1`). On phones it joins the Panes'
-bottom-sheet stack.
+bottom-sheet stack. Wider, it keeps the Panes 12 px above it, and it starts 12 px beside a `fill` Pane
+(see "Panes and the TimeStrip share one layout" under Pane).
 
 ```svelte
 <TimeStrip title="records per year" domain={[2000, 2026]} bind:brush plotLeft={32}
@@ -360,7 +387,8 @@ restore returns to the previous height.
 
 Props: `title`, `bind:collapsed`, `bind:expanded` (false), `expandable` (true), `tabs?`, `bind:active?`,
 `bind:height` (140), `minHeight`, `maxHeight`, `domain?`,
-`plotLeft`, `plotRight`, `bind:brush` (`[f0, f1] | null`), `overlay` (true), `sheetBelow`,
+`plotLeft`, `plotRight`, `bind:brush` (`[f0, f1] | null`), `overlay` (true; the layout with the Panes
+needs it), `sheetBelow`,
 `onbrush?`, `onbrushend?`, `onclear?`; snippets `children({width, height})`, `actions`.
 
 ### theme.ts

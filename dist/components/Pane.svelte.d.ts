@@ -16,6 +16,9 @@ interface Props {
     width?: number;
     /** fixed height in px; default fits the content */
     height?: number;
+    /** run the container's full height (top to bottom, `margin` px clear) instead of ending above an
+     * overlay TimeStrip, which then starts beside the pane; its content can grow to fill it */
+    fill?: boolean;
     minWidth?: number;
     minHeight?: number;
     margin?: number;

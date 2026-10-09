@@ -38,7 +38,7 @@ are in [README.md](README.md); the demo at <https://marinebon.org/ui/> shows eac
 | choose one of a few (≤ 7) fixed options | `Select` | or a row of `Button variant="quiet" pressed` for 2–3 options |
 | on/off | `Toggle` | |
 | a number in a range (year, threshold, opacity) | `Slider` | `ticks` for landmarks; ± buttons step precisely |
-| the step-by-step control panel | `Controls` | one tab per pipeline step, numbered ① ② ③ ④ |
+| the step-by-step control panel | `Controls` | one tab per pipeline step, numbered ① ② ③ ④; `fill` when a tab is a long list (the Time strip then sits beside it) |
 | any other floating panel (legend, details, table) | `Pane` | give it an `id` so its position is remembered; bind `open`/`collapsed`/`expanded` to the URL state |
 | export / download options | `Menu` in a Pane's `actions` slot | the one coral Download button lives in the delivery tab |
 | colour scale | `Legend` | continuous for numbers, categorical for classes; put one in the Sentence `sub` line |
@@ -46,6 +46,11 @@ are in [README.md](README.md); the demo at <https://marinebon.org/ui/> shows eac
 | a headline number | `Stat` | |
 | a time chart with a range brush | `TimeStrip` | the chart is yours (slot); the strip gives you `onbrush`/`onbrushend` with `v0`/`v1` |
 | keyboard hints in help text | `Kbd` | |
+
+**Gaps between panes are the kit's.** Never size a Pane or the TimeStrip around the other in app CSS or
+code (no `max-height` overrides, no measured `left`): the container's `PaneStack` keeps the Panes 12 px
+above an overlay TimeStrip, or the strip 12 px beside a `fill` Pane. If a layout needs something it
+can't do, extend the kit.
 
 If no component fits, compose existing ones and the tokens before writing new CSS. A new widget that
 two apps need belongs in this kit, not in an app.

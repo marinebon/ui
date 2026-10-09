@@ -1,7 +1,7 @@
 /* ============================================================================
    @marinebon/ui · BASE
    Element defaults that consume the tokens (after the site's base.css), plus
-   the shared primitives: .mbon-label, .mbon-card, .mbon-sr-only.
+   the shared primitives: .mbon-label, .mbon-card, .mbon-sr-only, .mbon-fill.
    ========================================================================== */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -93,3 +93,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
+
+/* inside a `fill` Pane (or Controls), a wrapper that grows with the pane: put it on each element between
+   the tab panel and a fill Picker, so the list takes the pane's height. no effect elsewhere. */
+.mbon-pane.fill .mbon-fill { flex: 1; min-height: 0; display: flex; flex-direction: column; }

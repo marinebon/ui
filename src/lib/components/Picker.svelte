@@ -21,6 +21,9 @@
     modeToggle?: boolean;
     /** max list height (css length) */
     maxHeight?: string;
+    /** in a fill Pane or Controls (not a phone sheet), the list takes the height left to it instead of
+     * `maxHeight` (at least 8rem); every wrapper between the panel and the Picker needs `.mbon-fill` */
+    fill?: boolean;
     emptyText?: string;
     /** custom row content */
     row?: Snippet<[PickerItem]>;
@@ -35,6 +38,7 @@
     placeholder = "Search…",
     modeToggle,
     maxHeight = "18rem",
+    fill = false,
     emptyText = "No matches",
     row,
     onselect,
@@ -131,7 +135,7 @@
   }
 </script>
 
-<div class="mbon-picker">
+<div class="mbon-picker" class:fill>
   {#if showLabel}<span class="mbon-label" id="{id}-lab">{label}</span>{/if}
   <div class="bar">
     <input
@@ -226,6 +230,8 @@
   }
   .mode button[aria-pressed="true"] { background: var(--selected-bg); color: var(--text-strong); }
   .list { position: relative; overflow: auto; overscroll-behavior: contain; margin: 0 calc(-1 * var(--space-1)); }
+  :global(.mbon-pane.fill) .mbon-picker.fill { flex: 1; min-height: 0; }
+  :global(.mbon-pane.fill) .mbon-picker.fill .list { flex: 1; min-height: 8rem; max-height: none !important; }
   .ghead { padding: var(--space-2) var(--space-2) var(--space-1); }
   .opt {
     display: flex;
