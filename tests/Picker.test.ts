@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import Picker from "../src/lib/components/Picker.svelte";
-import { pickerMatches } from "../src/lib/utils";
+import PickerQueryHarness from "./fixtures/PickerQueryHarness.svelte";
+import { PICKER_MIN_QUERY, pickerFilter, pickerMatches } from "../src/lib/utils";
 import type { PickerItem } from "../src/lib/types";
 
 const items: PickerItem[] = [
@@ -83,5 +84,36 @@ describe("Picker", () => {
   it("shows counts", () => {
     render(Picker, { props: { items, label: "variables" } });
     expect(screen.getByRole("option", { name: /Sea surface temperature/ })).toHaveTextContent("12");
+  });
+
+  describe("match: always / query", () => {
+    const tail: PickerItem[] = [
+      ...items,
+      { id: "f1", label: "Balaenidae", group: "Families", match: "query" },
+      { id: "f2", label: "Balaenopteridae", group: "Families", match: "query" },
+      { id: "f3", label: "Delphinidae", group: "Families", match: "query" },
+      { id: "any", label: "Search everything…", group: "Any", match: "always" },
+    ];
+
+    it("pickerFilter: query rows only for a long enough matching search, always rows always", () => {
+      const ids = (q: string, lim?: number) => pickerFilter(tail, q, lim).items.map((i) => i.id);
+      expect(ids("")).toEqual(["sst", "chl", "rich", "sal", "any"]);
+      expect(ids("b".repeat(PICKER_MIN_QUERY - 1))).toEqual(["chl", "rich", "any"]); // too short for the families
+      expect(ids("balaen")).toEqual(["f1", "f2", "any"]);
+      expect(ids("zzz")).toEqual(["any"]);
+      // the limit applies to query rows only and counts the rest
+      expect(pickerFilter(tail, "idae", 1)).toEqual({ items: [tail[4], tail[7]], hidden: 2 });
+    });
+
+    it("lists query rows while searching, keeps the always row, and binds the search text", async () => {
+      const user = userEvent.setup();
+      render(PickerQueryHarness, { props: { items: tail.slice(0, -1), queryLimit: 2 } });
+      expect(names()).not.toContain("Balaenidae");
+      expect(names()).toContain("Search everything…");
+      await user.type(screen.getByRole("combobox"), "idae");
+      expect(screen.getByTestId("q")).toHaveTextContent("idae");
+      expect(names()).toEqual(["Balaenidae", "Balaenopteridae", "Search everything for “idae”…"]);
+      expect(screen.getByText("1 more match: keep typing")).toBeInTheDocument();
+    });
   });
 });

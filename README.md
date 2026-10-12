@@ -250,8 +250,25 @@ by group" switches between a flat sorted list and the given group order.
 ```
 
 Props: `items: PickerItem[]` (`id`, `label`, `group?`, `icon?`, `color?`, `count?`, `keywords?`,
-`disabled?`), `bind:value`, `bind:mode` (`az`|`group`), `label`, `showLabel`, `placeholder`,
-`modeToggle?`, `maxHeight` ("18rem"), `emptyText`, `onselect?`; snippet `row(item)`.
+`disabled?`, `match?`), `bind:value`, `bind:mode` (`az`|`group`), `bind:query` (the search text),
+`label`, `showLabel`, `placeholder`, `modeToggle?`, `maxHeight` ("18rem"), `queryLimit` (50),
+`emptyText`, `onselect?`; snippet `row(item)`.
+
+Two kinds of rows step outside the search (0.4.1). `match: "always"` is listed whatever is typed: an
+exit to a wider search, labelled from `bind:query` ("Search all of WoRMS for “Cetacea”…"), so a name
+that is not in the list still leads somewhere. `match: "query"` is listed only once the search has two
+characters (`PICKER_MIN_QUERY`) and matches, at most `queryLimit` of them with "n more matches: keep
+typing" under the list: a long tail (thousands of families) that would bury the unfiltered list. The
+filter is `pickerFilter(items, q, queryLimit)`.
+
+```svelte
+<script>
+  let query = $state("");
+  const items = $derived([...taxa, ...families.map((f) => ({ ...f, match: "query" })),
+    { id: "worms", label: query ? `Search WoRMS for “${query}”…` : "Search WoRMS…", group: "Any taxon", match: "always" }]);
+</script>
+<Picker {items} bind:value bind:query label="taxa" />
+```
 
 ### Menu
 

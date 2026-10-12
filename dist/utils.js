@@ -28,6 +28,34 @@ export const FACETS = ["place", "method", "org", "type", "portal", "content", "t
 export const facetVar = (f) => !f ? "var(--brand)" : f === "dataset" || f === "delivery" ? `var(--pipe-${f})` : `var(--facet-${f})`;
 /** text colour on a facet fill (coral delivery takes dark ink) */
 export const onFacetVar = (f) => (f === "delivery" ? "var(--on-action)" : "var(--on-facet)");
+/** characters a search needs before `match: "query"` rows are listed */
+export const PICKER_MIN_QUERY = 2;
+/** Picker rows for a search: the matching rows in their order, `match: "always"` rows whatever the
+ * search, and `match: "query"` rows only for a search of at least `PICKER_MIN_QUERY` characters, the
+ * first `queryLimit` of them; `hidden` counts the query rows that matched past the limit */
+export function pickerFilter(items, q, queryLimit = 50) {
+    const long = q.trim().length >= PICKER_MIN_QUERY;
+    const out = [];
+    let shown = 0;
+    let hidden = 0;
+    for (const it of items) {
+        if (it.match === "always")
+            out.push(it);
+        else if (it.match === "query") {
+            if (!long || !pickerMatches(it, q))
+                continue;
+            if (shown < queryLimit) {
+                out.push(it);
+                shown++;
+            }
+            else
+                hidden++;
+        }
+        else if (pickerMatches(it, q))
+            out.push(it);
+    }
+    return { items: out, hidden };
+}
 /** Picker search: every whitespace-separated term must appear in label, group or keywords */
 export function pickerMatches(it, q) {
     const terms = q.toLowerCase().split(/\s+/).filter(Boolean);

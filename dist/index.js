@@ -21,5 +21,5 @@ export { default as Stat } from "./components/Stat.svelte";
 export { default as Kbd } from "./components/Kbd.svelte";
 export * from "./theme.js";
 export * from "./types.js";
-export { FACETS, facetVar, onFacetVar, circled, pickerMatches } from "./utils.js";
+export { FACETS, facetVar, onFacetVar, circled, pickerMatches, pickerFilter, PICKER_MIN_QUERY } from "./utils.js";
 export { viewportBucket, paneSide, stripEdges, STRIP_MIN_WIDTH } from "./paneStack.svelte.js";

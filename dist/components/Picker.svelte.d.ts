@@ -16,10 +16,14 @@ interface Props {
      * `maxHeight` (at least 8rem); every wrapper between the panel and the Picker needs `.mbon-fill` */
     fill?: boolean;
     emptyText?: string;
+    /** the search text (bindable: an app can offer a row built from it) */
+    query?: string;
+    /** at most this many `match: "query"` rows are listed; the rest are counted ("keep typing") */
+    queryLimit?: number;
     /** custom row content */
     row?: Snippet<[PickerItem]>;
     onselect?: (item: PickerItem) => void;
 }
-declare const Picker: import("svelte").Component<Props, {}, "value" | "mode">;
+declare const Picker: import("svelte").Component<Props, {}, "query" | "value" | "mode">;
 type Picker = ReturnType<typeof Picker>;
 export default Picker;

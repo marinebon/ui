@@ -24,6 +24,11 @@ export interface PickerItem {
     /** extra words matched by the search but not shown */
     keywords?: string;
     disabled?: boolean;
+    /** when the row is listed: by default when it matches the search (or the search is empty);
+     * "always" whatever the search says (an exit such as "Search all of WoRMS for '…'"); "query" only
+     * once the search has `PICKER_MIN_QUERY` characters and matches (a long tail kept out of the
+     * unfiltered list), at most `queryLimit` of them */
+    match?: "always" | "query";
 }
 export interface ControlsTab {
     id: string;

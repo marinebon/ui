@@ -14,6 +14,20 @@ export declare const FACETS: Facet[];
 export declare const facetVar: (f: Facet | undefined) => string;
 /** text colour on a facet fill (coral delivery takes dark ink) */
 export declare const onFacetVar: (f: Facet | undefined) => string;
+/** characters a search needs before `match: "query"` rows are listed */
+export declare const PICKER_MIN_QUERY = 2;
+/** Picker rows for a search: the matching rows in their order, `match: "always"` rows whatever the
+ * search, and `match: "query"` rows only for a search of at least `PICKER_MIN_QUERY` characters, the
+ * first `queryLimit` of them; `hidden` counts the query rows that matched past the limit */
+export declare function pickerFilter<T extends {
+    label: string;
+    group?: string;
+    keywords?: string;
+    match?: "always" | "query";
+}>(items: T[], q: string, queryLimit?: number): {
+    items: T[];
+    hidden: number;
+};
 /** Picker search: every whitespace-separated term must appear in label, group or keywords */
 export declare function pickerMatches(it: {
     label: string;

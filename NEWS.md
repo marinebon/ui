@@ -1,3 +1,16 @@
+# @marinebon/ui 0.4.1
+
+- **Picker rows that step outside the search.** `PickerItem.match: "always"` lists a row whatever is
+  typed (an exit such as "Search all of WoRMS for “Cetacea”…"); `match: "query"` lists a row only
+  while the search has at least two characters (`PICKER_MIN_QUERY`) and matches, at most `queryLimit`
+  (50) of them, with "n more matches: keep typing" under the list. obis-hex needed both: typing a
+  taxon that is not precomputed hid the row that searches WoRMS, and 5,800 families would bury the
+  list.
+- `Picker` binds the search text (`bind:query`), so a row can be built from it.
+- New export `pickerFilter(items, q, queryLimit)`, the rule above as a function.
+- `@marinebon/ui/utils` exports the plain helpers (`pickerFilter`, `pickerMatches`, …) without the
+  components, so an app's Node tests can import them.
+
 # @marinebon/ui 0.4.0
 
 - **One layout for the panes and the TimeStrip.** `Pane` (and `Controls`) take `fill`: the pane runs

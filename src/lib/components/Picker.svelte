@@ -2,12 +2,13 @@
   Picker: a searchable list with optional groups, icons/swatches and counts. the search box is a
   combobox: ↑ ↓ PgUp PgDn move, Enter picks, Esc clears the search (a second Esc reaches the
   enclosing Chip). "A–Z / by group" switches between a flat sorted list and groups.
-  `value` (selected id) and `mode` are bindable.
+  `value` (selected id), `mode` and the search text `query` are bindable. An item's `match` lists it
+  whatever the search ("always") or only while searching ("query", at most `queryLimit`).
 -->
 <script lang="ts">
   import type { Snippet } from "svelte";
   import type { PickerItem } from "../types.js";
-  import { clamp, nextId, pickerMatches } from "../utils.js";
+  import { clamp, nextId, pickerFilter } from "../utils.js";
 
   interface Props {
     items: PickerItem[];
@@ -25,6 +26,10 @@
      * `maxHeight` (at least 8rem); every wrapper between the panel and the Picker needs `.mbon-fill` */
     fill?: boolean;
     emptyText?: string;
+    /** the search text (bindable: an app can offer a row built from it) */
+    query?: string;
+    /** at most this many `match: "query"` rows are listed; the rest are counted ("keep typing") */
+    queryLimit?: number;
     /** custom row content */
     row?: Snippet<[PickerItem]>;
     onselect?: (item: PickerItem) => void;
@@ -40,6 +45,8 @@
     maxHeight = "18rem",
     fill = false,
     emptyText = "No matches",
+    query = $bindable(""),
+    queryLimit = 50,
     row,
     onselect,
   }: Props = $props();
@@ -49,11 +56,11 @@
   const effMode = $derived(mode ?? (hasGroups ? "group" : "az"));
   const showToggle = $derived(modeToggle ?? hasGroups);
 
-  let query = $state("");
   let active = $state(0);
   let listEl: HTMLDivElement | undefined = $state();
 
-  const filtered = $derived(items.filter((it) => pickerMatches(it, query)));
+  const found = $derived(pickerFilter(items, query, queryLimit));
+  const filtered = $derived(found.items);
 
   const sections = $derived.by(() => {
     if (effMode === "az" || !hasGroups) {
@@ -174,6 +181,7 @@
       {/each}
     </div>
     {#if !flat.length}<p class="empty">{emptyText}</p>{/if}
+    {#if found.hidden}<p class="empty">{found.hidden.toLocaleString()} more {found.hidden === 1 ? "match" : "matches"}: keep typing</p>{/if}
   </div>
   <span class="mbon-sr-only" aria-live="polite">{flat.length} {flat.length === 1 ? "result" : "results"}</span>
 </div>

@@ -51,6 +51,34 @@ export const facetVar = (f: Facet | undefined): string =>
 /** text colour on a facet fill (coral delivery takes dark ink) */
 export const onFacetVar = (f: Facet | undefined): string => (f === "delivery" ? "var(--on-action)" : "var(--on-facet)");
 
+/** characters a search needs before `match: "query"` rows are listed */
+export const PICKER_MIN_QUERY = 2;
+
+/** Picker rows for a search: the matching rows in their order, `match: "always"` rows whatever the
+ * search, and `match: "query"` rows only for a search of at least `PICKER_MIN_QUERY` characters, the
+ * first `queryLimit` of them; `hidden` counts the query rows that matched past the limit */
+export function pickerFilter<T extends { label: string; group?: string; keywords?: string; match?: "always" | "query" }>(
+  items: T[],
+  q: string,
+  queryLimit = 50,
+): { items: T[]; hidden: number } {
+  const long = q.trim().length >= PICKER_MIN_QUERY;
+  const out: T[] = [];
+  let shown = 0;
+  let hidden = 0;
+  for (const it of items) {
+    if (it.match === "always") out.push(it);
+    else if (it.match === "query") {
+      if (!long || !pickerMatches(it, q)) continue;
+      if (shown < queryLimit) {
+        out.push(it);
+        shown++;
+      } else hidden++;
+    } else if (pickerMatches(it, q)) out.push(it);
+  }
+  return { items: out, hidden };
+}
+
 /** Picker search: every whitespace-separated term must appear in label, group or keywords */
 export function pickerMatches(
   it: { label: string; group?: string; keywords?: string },
